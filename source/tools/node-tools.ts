@@ -774,7 +774,7 @@ export class NodeTools implements ToolExecutor {
                         Editor.Message.request('scene', 'set-property', {
                             uuid: uuid,
                             path: 'position',
-                            dump: { value: normalizedPosition.value }
+                            dump: { value: normalizedPosition.value, type: 'cc.Vec3' }
                         })
                     );
                     updates.push('position');
@@ -790,7 +790,7 @@ export class NodeTools implements ToolExecutor {
                         Editor.Message.request('scene', 'set-property', {
                             uuid: uuid,
                             path: 'rotation',
-                            dump: { value: normalizedRotation.value }
+                            dump: { value: normalizedRotation.value, type: 'cc.Vec3' }
                         })
                     );
                     updates.push('rotation');
@@ -806,7 +806,7 @@ export class NodeTools implements ToolExecutor {
                         Editor.Message.request('scene', 'set-property', {
                             uuid: uuid,
                             path: 'scale',
-                            dump: { value: normalizedScale.value }
+                            dump: { value: normalizedScale.value, type: 'cc.Vec3' }
                         })
                     );
                     updates.push('scale');

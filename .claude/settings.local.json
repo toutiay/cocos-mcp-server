@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(curl -s -X POST http://localhost:3000/mcp -H \"Content-Type: application/json\" -d '{\"\"\"\"jsonrpc\"\"\"\":\"\"\"\"2.0\"\"\"\",\"\"\"\"id\"\"\"\":1,\"\"\"\"method\"\"\"\":\"\"\"\"tools/call\"\"\"\",\"\"\"\"params\"\"\"\":{\"\"\"\"name\"\"\"\":\"\"\"\"node_node_script_management\"\"\"\",\"\"\"\"arguments\"\"\"\":{\"\"\"\"action\"\"\"\":\"\"\"\"attach\"\"\"\",\"\"\"\"nodeUuid\"\"\"\":\"\"\"\"45RH9HQehH9pS5vKXZyOkU\"\"\"\",\"\"\"\"scriptPath\"\"\"\":\"\"\"\"db://assets/scripts/game/element/EggElement.ts\"\"\"\"}}}')",
+      "Bash(python -m json.tool)",
+      "Bash(curl -s -X POST http://localhost:3000/mcp -H \"Content-Type: application/json\" -d '{\"\"\"\"jsonrpc\"\"\"\":\"\"\"\"2.0\"\"\"\",\"\"\"\"id\"\"\"\":1,\"\"\"\"method\"\"\"\":\"\"\"\"tools/call\"\"\"\",\"\"\"\"params\"\"\"\":{\"\"\"\"name\"\"\"\":\"\"\"\"component_set_component_property\"\"\"\",\"\"\"\"arguments\"\"\"\":{\"\"\"\"nodeUuid\"\"\"\":\"\"\"\"45RH9HQehH9pS5vKXZyOkU\"\"\"\",\"\"\"\"componentType\"\"\"\":\"\"\"\"741ceLuHK9ETZ4WJbWdB8kq\"\"\"\",\"\"\"\"property\"\"\"\":\"\"\"\"enableCollider\"\"\"\",\"\"\"\"value\"\"\"\":true}}}')",
+      "Bash(curl -s -X POST http://localhost:3000/mcp -H \"Content-Type: application/json\" -d '{\"\"\"\"jsonrpc\"\"\"\":\"\"\"\"2.0\"\"\"\",\"\"\"\"id\"\"\"\":1,\"\"\"\"method\"\"\"\":\"\"\"\"tools/list\"\"\"\"}')"
     ],
     "deny": []
   }

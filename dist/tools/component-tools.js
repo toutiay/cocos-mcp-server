@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ComponentTools = void 0;
+const fs = require("fs");
+const path = require("path");
 class ComponentTools {
     getTools() {
         return [
@@ -1010,6 +1012,9 @@ class ComponentTools {
                         propertyType: finalPropertyType,
                         path: propertyPath
                     });
+                    if (finalPropertyType === 'spriteFrame') {
+                        processedValue = await this.resolveSpriteFrameReference(processedValue);
+                    }
                     // Determine asset type based on property name
                     let assetType = 'cc.SpriteFrame'; // default
                     if (property.toLowerCase().includes('texture')) {
@@ -1774,6 +1779,52 @@ class ComponentTools {
         }
         // 如果不是有效的十六进制格式，返回错误提示
         throw new Error(`Invalid color format: "${colorStr}". Only hexadecimal format is supported (e.g., "#FF0000" or "#FF0000FF")`);
+    }
+    async resolveSpriteFrameReference(input) {
+        var _a, _b;
+        if (typeof input !== 'string' || !input) {
+            return input;
+        }
+        if (input.includes('@')) {
+            return input;
+        }
+        let assetUrl = input;
+        if (!assetUrl.startsWith('db://')) {
+            try {
+                const queriedUrl = await Editor.Message.request('asset-db', 'query-url', input);
+                if (typeof queriedUrl === 'string' && queriedUrl) {
+                    assetUrl = queriedUrl;
+                }
+            }
+            catch (error) {
+                console.warn(`[ComponentTools] Failed to query asset url for spriteFrame '${input}':`, error);
+            }
+        }
+        if (!assetUrl.startsWith('db://assets/')) {
+            return input;
+        }
+        const relativeAssetPath = assetUrl.replace('db://assets/', '').replace(/\//g, path.sep);
+        const metaPath = path.join(Editor.Project.path, 'assets', `${relativeAssetPath}.meta`);
+        if (!fs.existsSync(metaPath)) {
+            return input;
+        }
+        try {
+            const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+            if (typeof ((_b = (_a = meta === null || meta === void 0 ? void 0 : meta.userData) === null || _a === void 0 ? void 0 : _a.redirect) === null || _b === void 0 ? void 0 : _b.toString()) === 'string' && meta.userData.redirect) {
+                return meta.userData.redirect;
+            }
+            if (meta === null || meta === void 0 ? void 0 : meta.subMetas) {
+                for (const subMeta of Object.values(meta.subMetas)) {
+                    if (((subMeta === null || subMeta === void 0 ? void 0 : subMeta.importer) === 'sprite-frame' || (subMeta === null || subMeta === void 0 ? void 0 : subMeta.name) === 'spriteFrame') && typeof (subMeta === null || subMeta === void 0 ? void 0 : subMeta.uuid) === 'string' && subMeta.uuid) {
+                        return subMeta.uuid;
+                    }
+                }
+            }
+        }
+        catch (error) {
+            console.warn(`[ComponentTools] Failed to resolve spriteFrame meta for '${assetUrl}':`, error);
+        }
+        return input;
     }
     async verifyPropertyChange(nodeUuid, componentType, property, originalValue, expectedValue) {
         var _a, _b;
