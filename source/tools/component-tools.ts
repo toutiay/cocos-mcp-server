@@ -1,4 +1,6 @@
 import { ToolDefinition, ToolResponse, ToolExecutor, ComponentInfo } from '../types';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export class ComponentTools implements ToolExecutor {
     getTools(): ToolDefinition[] {
@@ -759,6 +761,10 @@ export class ComponentTools implements ToolExecutor {
                         propertyType: propertyType,
                         path: propertyPath
                     });
+
+                    if (propertyType === 'spriteFrame') {
+                        processedValue = await this.resolveSpriteFrameReference(processedValue);
+                    }
                     
                     // Determine asset type based on property name
                     let assetType = 'cc.SpriteFrame'; // default
@@ -1507,7 +1513,7 @@ export class ComponentTools implements ToolExecutor {
         }
     }
 
-        private parseColorString(colorStr: string): { r: number; g: number; b: number; a: number } {
+    private parseColorString(colorStr: string): { r: number; g: number; b: number; a: number } {
         const str = colorStr.trim();
         
         // 只支持十六进制格式 #RRGGBB 或 #RRGGBBAA
@@ -1528,6 +1534,60 @@ export class ComponentTools implements ToolExecutor {
         
         // 如果不是有效的十六进制格式，返回错误提示
         throw new Error(`Invalid color format: "${colorStr}". Only hexadecimal format is supported (e.g., "#FF0000" or "#FF0000FF")`);
+    }
+
+    private async resolveSpriteFrameReference(input: any): Promise<any> {
+        if (typeof input !== 'string' || !input) {
+            return input;
+        }
+
+        if (input.includes('@')) {
+            return input;
+        }
+
+        let assetUrl = input;
+        if (!assetUrl.startsWith('db://')) {
+            try {
+                const queriedUrl = await Editor.Message.request('asset-db', 'query-url', input);
+                if (typeof queriedUrl === 'string' && queriedUrl) {
+                    assetUrl = queriedUrl;
+                }
+            } catch (error) {
+                console.warn(`[ComponentTools] Failed to query asset url for spriteFrame '${input}':`, error);
+            }
+        }
+
+        if (!assetUrl.startsWith('db://assets/')) {
+            return input;
+        }
+
+        const relativeAssetPath = assetUrl.replace('db://assets/', '').replace(/\//g, path.sep);
+        const metaPath = path.join(Editor.Project.path, 'assets', `${relativeAssetPath}.meta`);
+        if (!fs.existsSync(metaPath)) {
+            return input;
+        }
+
+        try {
+            const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+            if (typeof meta?.userData?.redirect === 'string' && meta.userData.redirect) {
+                return meta.userData.redirect;
+            }
+
+            if (meta?.subMetas && typeof meta.subMetas === 'object') {
+                for (const subMeta of Object.values(meta.subMetas) as any[]) {
+                    if (subMeta?.importer === 'sprite-frame' && typeof subMeta.uuid === 'string' && subMeta.uuid) {
+                        return subMeta.uuid;
+                    }
+                    if (subMeta?.name === 'spriteFrame' && typeof subMeta.uuid === 'string' && subMeta.uuid) {
+                        return subMeta.uuid;
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn(`[ComponentTools] Failed to resolve spriteFrame meta for '${assetUrl}':`, error);
+        }
+
+        return input;
     }
 
     private async verifyPropertyChange(nodeUuid: string, componentType: string, property: string, originalValue: any, expectedValue: any): Promise<{ verified: boolean; actualValue: any; fullData: any }> {
